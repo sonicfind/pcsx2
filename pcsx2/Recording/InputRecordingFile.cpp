@@ -55,9 +55,7 @@ void InputRecordingFileHeader::SetGameName(wxString _gameName)
 bool InputRecordingFile::Close()
 {
 	if (recordingFile == nullptr)
-	{
 		return false;
-	}
 	fclose(recordingFile);
 	recordingFile = nullptr;
 	filename = "";
@@ -91,13 +89,11 @@ bool InputRecordingFile::FromSaveState()
 
 void InputRecordingFile::IncrementUndoCount()
 {
-	undoCount++;
-	if (recordingFile == nullptr)
+	if (fseek(recordingFile, seekpointUndoCount, SEEK_SET) == 0)
 	{
-		return;
+		undoCount++;
+		fwrite(&undoCount, 4, 1, recordingFile);
 	}
-	fseek(recordingFile, seekpointUndoCount, SEEK_SET);
-	fwrite(&undoCount, 4, 1, recordingFile);
 }
 
 bool InputRecordingFile::open(const wxString path, bool newRecording)
@@ -159,83 +155,57 @@ bool InputRecordingFile::OpenExisting(const wxString path)
 
 bool InputRecordingFile::ReadKeyBuffer(u8 &result, const uint &frame, const uint port, const uint bufIndex)
 {
-	if (recordingFile == nullptr)
-	{
-		return false;
-	}
-
-	long seek = getRecordingBlockSeekPoint(frame) + controllerInputBytes * port + bufIndex;
-	if (fseek(recordingFile, seek, SEEK_SET) != 0 || fread(&result, 1, 1, recordingFile) != 1)
-	{
-		return false;
-	}
-
-	return true;
+	const long seek = getRecordingBlockSeekPoint(frame) + controllerInputBytes * port + bufIndex;
+	return fseek(recordingFile, seek, SEEK_SET) == 0 && fread(&result, 1, 1, recordingFile) == 1;
 }
 
-void InputRecordingFile::SetTotalFrames(long frame)
+bool InputRecordingFile::SetTotalFrames(long frame)
 {
-	if (recordingFile == nullptr || totalFrames >= frame)
+	if (totalFrames < frame)
 	{
-		return;
+		totalFrames = frame;
+		if (fseek(recordingFile, seekpointTotalFrames, SEEK_SET) == 0)
+		{
+			fwrite(&totalFrames, 4, 1, recordingFile);
+			fflush(recordingFile);
+		}
+		return true;
 	}
-	totalFrames = frame;
-	fseek(recordingFile, seekpointTotalFrames, SEEK_SET);
-	fwrite(&totalFrames, 4, 1, recordingFile);
+	else
+	{
+		fflush(recordingFile);
+		return totalFrames == frame;
+	}
 }
 
 bool InputRecordingFile::WriteHeader()
 {
-	if (recordingFile == nullptr)
-	{
-		return false;
-	}
 	rewind(recordingFile);
-	if (fwrite(&header, sizeof(InputRecordingFileHeader), 1, recordingFile) != 1
-		|| fwrite(&totalFrames, 4, 1, recordingFile) != 1
-		|| fwrite(&undoCount, 4, 1, recordingFile) != 1
-		|| fwrite(&savestate, 1, 1, recordingFile) != 1)
-	{
-		return false;
-	}
-	return true;
+	return fwrite(&header, sizeof(InputRecordingFileHeader), 1, recordingFile) == 1 &&
+		fwrite(&totalFrames, 4, 1, recordingFile) == 1 &&
+		fwrite(&undoCount, 4, 1, recordingFile) == 1 &&
+		fwrite(&savestate, 1, 1, recordingFile) == 1;
 }
 
 bool InputRecordingFile::WriteKeyBuffer(const uint &frame, const uint port, const uint bufIndex, const u8 &buf)
 {
-	if (recordingFile == nullptr)
-	{
-		return false;
-	}
-
-	long seek = getRecordingBlockSeekPoint(frame) + 18 * port + bufIndex;
-
-	if (fseek(recordingFile, seek, SEEK_SET) != 0 || fwrite(&buf, 1, 1, recordingFile) != 1)
-	{
-		return false;
-	}
-
-	fflush(recordingFile);
-	return true;
+	const long seek = getRecordingBlockSeekPoint(frame) + controllerInputBytes * port + bufIndex;
+	return fseek(recordingFile, seek, SEEK_SET) == 0 && fwrite(&buf, 1, 1, recordingFile) == 1;
 }
 
-long InputRecordingFile::getRecordingBlockSeekPoint(const long &frame)
+long InputRecordingFile::getRecordingBlockSeekPoint(const long frame)
 {
 	return headerSize + sizeof(bool) + frame * inputBytesPerFrame;
 }
 
 bool InputRecordingFile::verifyRecordingFileHeader()
 {
-	if (recordingFile == nullptr)
-	{
-		return false;
-	}
 	// Verify header contents
 	rewind(recordingFile);
 	if (fread(&header, sizeof(InputRecordingFileHeader), 1, recordingFile) != 1
 		|| fread(&totalFrames, 4, 1, recordingFile) != 1
 		|| fread(&undoCount, 4, 1, recordingFile) != 1
-		|| fread(&savestate.fromSavestate, sizeof(bool), 1, recordingFile) != 1)
+		|| fread(&savestate, sizeof(bool), 1, recordingFile) != 1)
 	{
 		return false;
 	}

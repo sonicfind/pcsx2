@@ -70,21 +70,21 @@ InputRecording::InputRecording()
 	padData[CONTROLLER_PORT_TWO] = new PadData();
 }
 
-void InputRecording::setVirtualPadPtr(VirtualPad* ptr, int const port)
+void InputRecording::setVirtualPadPtr(VirtualPad* ptr, const int port)
 {
 	virtualPads[port] = ptr;
 }
 
-void InputRecording::RecordingReset()
+void InputRecording::OnBoot()
 {
 	// Booting is an asynchronous task. If we are playing a recording
 	// that starts from power-on and the starting (pcsx2 internal) frame
 	// marker has not been set, we initialize it.
-	if (g_InputRecording.IsInitialLoad())
+	if (initialLoad)
 		g_InputRecording.SetupInitialState(0);
-	else if (g_InputRecording.IsActive())
+	else if (IsActive())
 	{
-		g_InputRecording.SetFrameCounter(0);
+		SetFrameCounter(0);
 		g_InputRecordingControls.Lock(0);
 	}
 	else
@@ -173,22 +173,16 @@ void InputRecording::IncrementFrameCounter()
 	if (frameCounter < INT_MAX)
 	{
 		frameCounter++;
-		switch (state)
-		{
-		case InputRecordingMode::Recording:
-			GetInputRecordingData().SetTotalFrames(frameCounter);
-			[[fallthrough]];
-		case InputRecordingMode::Replaying:
-			if (frameCounter == inputRecordingData.GetTotalFrames())
+		if (state == InputRecordingMode::Recording)
+			if (inputRecordingData.SetTotalFrames(frameCounter)) // Don't increment if we're at the last frame
 				incrementUndo = false;
-		}
 	}
 	g_InputRecording.LogAndRedraw();
 }
 
 void InputRecording::LogAndRedraw()
 {
-	for (u8 port = 0; port < 2; port++)
+	for (u8 port = 0; port < 2; ++port)
 	{
 		padData[port]->LogPadData(port);
 		// As well as re-render the virtual pad UI, if applicable
@@ -227,12 +221,12 @@ wxString InputRecording::RecordingModeTitleSegment()
 {
 	switch (state)
 	{
-		case InputRecordingMode::Recording:
-			return wxString("Recording");
-		case InputRecordingMode::Replaying:
-			return wxString("Replaying");
-		default:
-			return wxString("No Movie");
+	case InputRecordingMode::Recording:
+		return wxString("Recording");
+	case InputRecordingMode::Replaying:
+		return wxString("Replaying");
+	default:
+		return wxString("No Movie");
 	}
 }
 
@@ -254,13 +248,17 @@ void InputRecording::SetToReplayMode()
 
 void InputRecording::SetFrameCounter(u32 newGFrameCount)
 {
-	if (newGFrameCount > startingFrame + (u32)g_InputRecording.GetInputRecordingData().GetTotalFrames())
+	const u32 endFrame = startingFrame + inputRecordingData.GetTotalFrames();
+	if (newGFrameCount >= endFrame)
 	{
-		inputRec::consoleLog("Warning, you've loaded PCSX2 emulation to a point after the end of the original recording. This should be avoided.");
-		inputRec::consoleLog("Savestate's framecount has been ignored.");
-		frameCounter = g_InputRecording.GetInputRecordingData().GetTotalFrames();
+		if (newGFrameCount > endFrame)
+		{
+			inputRec::consoleLog("Warning, you've loaded PCSX2 emulation to a point after the end of the original recording. This should be avoided.");
+			inputRec::consoleLog("Savestate's framecount has been ignored.");
+		}
 		if (state == InputRecordingMode::Replaying)
 			SetToRecordMode();
+		frameCounter = inputRecordingData.GetTotalFrames();
 		incrementUndo = false;
 	}
 	else
