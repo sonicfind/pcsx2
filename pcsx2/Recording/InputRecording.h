@@ -89,6 +89,8 @@ public:
 	void Stop();
 	// Initialze VirtualPad window
 	void setVirtualPadPtr(VirtualPad* ptr, int const port);
+	// Logs the padData and redraws the virtualPad windows of active pads
+	void LogAndRedraw();
 
 private:
 	enum class InputRecordingMode
