@@ -453,9 +453,9 @@ struct Pcsx2Config
 			EnablePatches		:1,		// enables patch detection and application
 			EnableCheats		:1,		// enables cheat detection and application
 			EnableIPC		    :1,		// enables inter-process communication 
-			EnableWideScreenPatches		:1,
+			EnableWideScreenPatches	:1,
 #ifndef DISABLE_RECORDING
-			EnableRecordingTools :1,
+			EnableRecordingTools:1,
 #endif
 		// when enabled uses BOOT2 injection, skipping sony bios splashes
 			UseBOOT2Injection	:1,
@@ -464,8 +464,8 @@ struct Pcsx2Config
 			McdEnableEjection	:1,
 			McdFolderAutoManage	:1,
 
-			MultitapPort0_Enabled:1,
-			MultitapPort1_Enabled:1,
+			MultitapPort0_Enabled :1,
+			MultitapPort1_Enabled :1,
 
 			ConsoleToStdio		:1,
 			HostFs				:1,

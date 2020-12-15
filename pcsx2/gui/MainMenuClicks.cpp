@@ -865,6 +865,12 @@ void MainEmuFrame::Menu_Capture_Video_ToggleCapture_Click(wxCommandEvent& event)
 	VideoCaptureToggle();
 }
 
+void MainEmuFrame::Menu_Capture_Video_IncludeAudio_Click(wxCommandEvent& event)
+{
+	g_Conf->AudioCapture.EnableAudio = GetMenuBar()->IsChecked(MenuId_Capture_Video_IncludeAudio);
+	AppSaveSettings();
+}
+
 void MainEmuFrame::VideoCaptureToggle()
 {
 	GetMTGS().WaitGS(); // make sure GS is in sync with the audio stream when we start.
@@ -888,30 +894,31 @@ void MainEmuFrame::VideoCaptureToggle()
 			std::string filename;
 			if (GSsetupRecording(filename))
 			{
-				// Note: Add a dialog box here (or in the function) that prompts the user to answer whether a failed
-				// SPU2 recording setup should still lead to the visuals being recorded.
-				SPU2setupRecording(&filename);
-				m_submenuVideoCapture.Enable(MenuId_Capture_Video_Record, false);
-				m_submenuVideoCapture.Enable(MenuId_Capture_Video_Stop, true);
+				if (g_Conf->AudioCapture.EnableAudio && !SPU2setupRecording(&filename))
+				{
+					GSendRecording();
+					m_capturingVideo = false;
+				}
+				else
+				{
+					m_submenuVideoCapture.Enable(MenuId_Capture_Video_Record, false);
+					m_submenuVideoCapture.Enable(MenuId_Capture_Video_Stop, true);
+					m_submenuVideoCapture.Enable(MenuId_Capture_Video_IncludeAudio, false);
+				}
 			}
-			else
-			{
-				// recording dialog canceled by the user. align our state
+			else // recording dialog canceled by the user. align our state
 				m_capturingVideo = false;
-			}
+		}
+		// the GS doesn't support recording
+		else if (g_Conf->AudioCapture.EnableAudio && SPU2setupRecording(nullptr))
+		{
+			m_submenuVideoCapture.Enable(MenuId_Capture_Video_Record, false);
+			m_submenuVideoCapture.Enable(MenuId_Capture_Video_Stop, true);
+			m_submenuVideoCapture.Enable(MenuId_Capture_Video_IncludeAudio, false);
 		}
 		else
-		{
-			// the GS doesn't support recording.
-			if (SPU2setupRecording(nullptr))
-			{
-				m_submenuVideoCapture.Enable(MenuId_Capture_Video_Record, false);
-				m_submenuVideoCapture.Enable(MenuId_Capture_Video_Stop, true);
-			}
-			else
-				m_capturingVideo = false;
-		}
-
+			m_capturingVideo = false;
+		
 		if (needsMainFrameEnable)
 			Enable();
 	}
@@ -920,9 +927,11 @@ void MainEmuFrame::VideoCaptureToggle()
 		// stop recording
 		if (GSendRecording)
 			GSendRecording();
-		SPU2endRecording();
+		if (g_Conf->AudioCapture.EnableAudio)
+			SPU2endRecording();
 		m_submenuVideoCapture.Enable(MenuId_Capture_Video_Record, true);
 		m_submenuVideoCapture.Enable(MenuId_Capture_Video_Stop, false);
+		m_submenuVideoCapture.Enable(MenuId_Capture_Video_IncludeAudio, true);
 	}
 }
 

@@ -281,6 +281,7 @@ void MainEmuFrame::ConnectMenus()
 	// Capture
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Capture_Video_ToggleCapture_Click, this, MenuId_Capture_Video_Record);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Capture_Video_ToggleCapture_Click, this, MenuId_Capture_Video_Stop);
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Capture_Video_IncludeAudio_Click, this, MenuId_Capture_Video_IncludeAudio);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Capture_Screenshot_Screenshot_Click, this, MenuId_Capture_Screenshot_Screenshot);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Capture_Screenshot_Screenshot_As_Click, this, MenuId_Capture_Screenshot_Screenshot_As);
 
@@ -474,8 +475,11 @@ void MainEmuFrame::CreateWindowsMenu()
 void MainEmuFrame::CreateCaptureMenu()
 {
 	m_menuCapture.Append(MenuId_Capture_Video, _("Video"), &m_submenuVideoCapture);
-	m_submenuVideoCapture.Append(MenuId_Capture_Video_Record, _("Start Screenrecorder"));
-	m_submenuVideoCapture.Append(MenuId_Capture_Video_Stop, _("Stop Screenrecorder"))->Enable(false);
+	m_submenuVideoCapture.Append(MenuId_Capture_Video_Record, _("Start Video Capture"));
+	m_submenuVideoCapture.Append(MenuId_Capture_Video_Stop, _("Stop Video Capture"))->Enable(false);
+	m_submenuVideoCapture.AppendSeparator();
+	m_submenuVideoCapture.Append(MenuId_Capture_Video_IncludeAudio, _("Include Audio"),
+		_("Enables/disables the creation of a synchronized wav audio file when capturing video footage."), wxITEM_CHECK);
 
 	m_menuCapture.Append(MenuId_Capture_Screenshot, _("Screenshot"), &m_submenuScreenshot);
 	m_submenuScreenshot.Append(MenuId_Capture_Screenshot_Screenshot, _("Screenshot"));
@@ -779,6 +783,7 @@ void MainEmuFrame::ApplyConfigToGui(AppConfig& configToApply, int flags)
 		menubar.Check(MenuId_EnableCheats, configToApply.EmuOptions.EnableCheats);
 		menubar.Check(MenuId_EnableIPC, configToApply.EmuOptions.EnableIPC);
 		menubar.Check(MenuId_EnableWideScreenPatches, configToApply.EmuOptions.EnableWideScreenPatches);
+		menubar.Check(MenuId_Capture_Video_IncludeAudio, configToApply.AudioCapture.EnableAudio);
 #ifndef DISABLE_RECORDING
 		menubar.Check(MenuId_EnableInputRecording, configToApply.EmuOptions.EnableRecordingTools);
 #endif
