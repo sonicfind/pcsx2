@@ -123,6 +123,8 @@ enum AudioCaptureSetting
 	AudioBits_16,
 	AudioBits_24,
 	AudioBits_32,
+	Audio_Mono,
+	Audio_Stereo
 };
 
 // =====================================================================================================
@@ -296,6 +298,7 @@ public:
 	{
 		bool					EnableAudio;
 		AudioCaptureSetting		BitsPerSameple;
+		AudioCaptureSetting		ChannelConfig;
 
 		CaptureOptions();
 

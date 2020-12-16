@@ -938,6 +938,8 @@ void MainEmuFrame::SetCaptureMenu(const bool active)
 	m_submenuAudioCapture.Enable(MenuId_Capture_Audio_16Bit, !active);
 	m_submenuAudioCapture.Enable(MenuId_Capture_Audio_24Bit, !active);
 	m_submenuAudioCapture.Enable(MenuId_Capture_Audio_32Bit, !active);
+	m_submenuAudioCapture.Enable(MenuId_Capture_Audio_Stereo, !active);
+	m_submenuAudioCapture.Enable(MenuId_Capture_Audio_Mono, !active);
 }
 
 void MainEmuFrame::Menu_Capture_Audio_Bitrate_Click(wxCommandEvent& event)
@@ -955,6 +957,14 @@ void MainEmuFrame::Menu_Capture_Audio_Bitrate_Click(wxCommandEvent& event)
 		break;
 		jNO_DEFAULT
 	}
+}
+
+void MainEmuFrame::Menu_Capture_Audio_ChannelType_Click(wxCommandEvent& event)
+{
+	if (event.GetId() == MenuId_Capture_Audio_Mono)
+		g_Conf->AudioCapture.ChannelConfig = Audio_Mono;
+	else
+		g_Conf->AudioCapture.ChannelConfig = Audio_Stereo;
 }
 
 void MainEmuFrame::Menu_Capture_Screenshot_Screenshot_Click(wxCommandEvent& event)

@@ -200,6 +200,8 @@ enum MenuIdentifiers
 	MenuId_Capture_Audio_16Bit,
 	MenuId_Capture_Audio_24Bit,
 	MenuId_Capture_Audio_32Bit,
+	MenuId_Capture_Audio_Stereo,
+	MenuId_Capture_Audio_Mono,
 	MenuId_Capture_Screenshot,
 	MenuId_Capture_Screenshot_Screenshot,
 	MenuId_Capture_Screenshot_Screenshot_As,

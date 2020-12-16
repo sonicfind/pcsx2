@@ -112,6 +112,12 @@ void MainEmuFrame::UpdateAudioCaptureSelections()
 		jNO_DEFAULT
 	}
 
+	if (g_Conf->AudioCapture.ChannelConfig == Audio_Stereo)
+		menu->Check(MenuId_Capture_Audio_Stereo, true);
+	else
+		menu->Check(MenuId_Capture_Audio_Mono, true);
+}
+
 bool MainEmuFrame::Destroy()
 {
 	// Sigh: wxWidgets doesn't issue Destroy() calls for children windows when the parent
@@ -300,6 +306,7 @@ void MainEmuFrame::ConnectMenus()
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Capture_Video_ToggleCapture_Click, this, MenuId_Capture_Video_Stop);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Capture_Video_IncludeAudio_Click, this, MenuId_Capture_Video_IncludeAudio);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Capture_Audio_Bitrate_Click, this, MenuId_Capture_Audio_16Bit, MenuId_Capture_Audio_16Bit + 3);
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Capture_Audio_ChannelType_Click, this, MenuId_Capture_Audio_Stereo, MenuId_Capture_Audio_Stereo + 2);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Capture_Screenshot_Screenshot_Click, this, MenuId_Capture_Screenshot_Screenshot);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Capture_Screenshot_Screenshot_As_Click, this, MenuId_Capture_Screenshot_Screenshot_As);
 
@@ -502,6 +509,9 @@ void MainEmuFrame::CreateCaptureMenu()
 	m_submenuAudioCapture.Append(MenuId_Capture_Audio_16Bit, _("16 Bit (Default)"), wxEmptyString, wxITEM_RADIO);
 	m_submenuAudioCapture.Append(MenuId_Capture_Audio_24Bit, _("24 Bit"), wxEmptyString, wxITEM_RADIO);
 	m_submenuAudioCapture.Append(MenuId_Capture_Audio_32Bit, _("32 Bit"), wxEmptyString, wxITEM_RADIO);
+	m_submenuAudioCapture.AppendSeparator();
+	m_submenuAudioCapture.Append(MenuId_Capture_Audio_Stereo, _("Stereo (Default)"), wxEmptyString, wxITEM_RADIO);
+	m_submenuAudioCapture.Append(MenuId_Capture_Audio_Mono, _("Mono"), _("Note: some audio effects will not sound good with this setting"), wxITEM_RADIO);
 
 	m_menuCapture.Append(MenuId_Capture_Screenshot, _("Screenshot"), &m_submenuScreenshot);
 	m_submenuScreenshot.Append(MenuId_Capture_Screenshot_Screenshot, _("Screenshot"));

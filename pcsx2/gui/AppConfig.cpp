@@ -954,6 +954,7 @@ AppConfig::CaptureOptions::CaptureOptions()
 {
 	EnableAudio = false;
 	BitsPerSameple = AudioBits_16;
+	ChannelConfig = Audio_Stereo;
 }
 
 void AppConfig::CaptureOptions::LoadSave(IniInterface& ini)
@@ -967,11 +968,14 @@ void AppConfig::CaptureOptions::LoadSave(IniInterface& ini)
 		L"16_Bit",
 		L"24_Bit",
 		L"32_Bit",
+		L"Mono",
+		L"Stereo",
 		// WARNING: array must be NULL terminated to compute it size
 		NULL
 	};
 
 	ini.EnumEntry(L"BitsPerSameple", BitsPerSameple, AudioSettings, BitsPerSameple);
+	ini.EnumEntry(L"ChannelConfig", ChannelConfig, AudioSettings, ChannelConfig);
 }
 
 AppConfig::UiTemplateOptions::UiTemplateOptions()
