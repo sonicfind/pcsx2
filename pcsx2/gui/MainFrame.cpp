@@ -95,6 +95,23 @@ void MainEmuFrame::UpdateCdvdSrcSelection()
 	UpdateStatusBar();
 }
 
+void MainEmuFrame::UpdateAudioCaptureSelections()
+{
+	wxMenuBar* menu = GetMenuBar();
+	switch (g_Conf->AudioCapture.BitsPerSameple)
+	{
+	case AudioBits_16:
+		menu->Check(MenuId_Capture_Audio_16Bit, true);
+		break;
+	case AudioBits_24:
+		menu->Check(MenuId_Capture_Audio_24Bit, true);
+		break;
+	case AudioBits_32:
+		menu->Check(MenuId_Capture_Audio_32Bit, true);
+		break;
+		jNO_DEFAULT
+	}
+
 bool MainEmuFrame::Destroy()
 {
 	// Sigh: wxWidgets doesn't issue Destroy() calls for children windows when the parent
@@ -282,6 +299,7 @@ void MainEmuFrame::ConnectMenus()
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Capture_Video_ToggleCapture_Click, this, MenuId_Capture_Video_Record);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Capture_Video_ToggleCapture_Click, this, MenuId_Capture_Video_Stop);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Capture_Video_IncludeAudio_Click, this, MenuId_Capture_Video_IncludeAudio);
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Capture_Audio_Bitrate_Click, this, MenuId_Capture_Audio_16Bit, MenuId_Capture_Audio_16Bit + 3);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Capture_Screenshot_Screenshot_Click, this, MenuId_Capture_Screenshot_Screenshot);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Capture_Screenshot_Screenshot_As_Click, this, MenuId_Capture_Screenshot_Screenshot_As);
 
@@ -480,6 +498,10 @@ void MainEmuFrame::CreateCaptureMenu()
 	m_submenuVideoCapture.AppendSeparator();
 	m_submenuVideoCapture.Append(MenuId_Capture_Video_IncludeAudio, _("Include Audio"),
 		_("Enables/disables the creation of a synchronized wav audio file when capturing video footage."), wxITEM_CHECK);
+	m_menuCapture.Append(MenuId_Capture_Audio, _("Audio"), &m_submenuAudioCapture);
+	m_submenuAudioCapture.Append(MenuId_Capture_Audio_16Bit, _("16 Bit (Default)"), wxEmptyString, wxITEM_RADIO);
+	m_submenuAudioCapture.Append(MenuId_Capture_Audio_24Bit, _("24 Bit"), wxEmptyString, wxITEM_RADIO);
+	m_submenuAudioCapture.Append(MenuId_Capture_Audio_32Bit, _("32 Bit"), wxEmptyString, wxITEM_RADIO);
 
 	m_menuCapture.Append(MenuId_Capture_Screenshot, _("Screenshot"), &m_submenuScreenshot);
 	m_submenuScreenshot.Append(MenuId_Capture_Screenshot_Screenshot, _("Screenshot"));
@@ -532,6 +554,7 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 	, m_menuWindow(*new wxMenu())
 	, m_menuCapture(*new wxMenu())
 	, m_submenuVideoCapture(*new wxMenu())
+	, m_submenuAudioCapture(*new wxMenu())
 	, m_submenuScreenshot(*new wxMenu())
 #ifndef DISABLE_RECORDING
 	, m_menuRecording(*new wxMenu())
@@ -799,6 +822,7 @@ void MainEmuFrame::ApplyConfigToGui(AppConfig& configToApply, int flags)
 	}
 
 	UpdateCdvdSrcSelection(); //shouldn't be affected by presets but updates from g_Conf anyway and not from configToApply, so no problem here.
+	UpdateAudioCaptureSelections();
 }
 
 //write pending preset settings from the gui to g_Conf,

@@ -868,7 +868,7 @@ void MainEmuFrame::Menu_Capture_Video_ToggleCapture_Click(wxCommandEvent& event)
 void MainEmuFrame::Menu_Capture_Video_IncludeAudio_Click(wxCommandEvent& event)
 {
 	g_Conf->AudioCapture.EnableAudio = GetMenuBar()->IsChecked(MenuId_Capture_Video_IncludeAudio);
-	AppSaveSettings();
+	ApplySettings();
 }
 
 void MainEmuFrame::VideoCaptureToggle()
@@ -901,9 +901,7 @@ void MainEmuFrame::VideoCaptureToggle()
 				}
 				else
 				{
-					m_submenuVideoCapture.Enable(MenuId_Capture_Video_Record, false);
-					m_submenuVideoCapture.Enable(MenuId_Capture_Video_Stop, true);
-					m_submenuVideoCapture.Enable(MenuId_Capture_Video_IncludeAudio, false);
+					SetCaptureMenu(true);
 				}
 			}
 			else // recording dialog canceled by the user. align our state
@@ -912,9 +910,7 @@ void MainEmuFrame::VideoCaptureToggle()
 		// the GS doesn't support recording
 		else if (g_Conf->AudioCapture.EnableAudio && SPU2setupRecording(nullptr))
 		{
-			m_submenuVideoCapture.Enable(MenuId_Capture_Video_Record, false);
-			m_submenuVideoCapture.Enable(MenuId_Capture_Video_Stop, true);
-			m_submenuVideoCapture.Enable(MenuId_Capture_Video_IncludeAudio, false);
+			SetCaptureMenu(true);
 		}
 		else
 			m_capturingVideo = false;
@@ -929,9 +925,35 @@ void MainEmuFrame::VideoCaptureToggle()
 			GSendRecording();
 		if (g_Conf->AudioCapture.EnableAudio)
 			SPU2endRecording();
-		m_submenuVideoCapture.Enable(MenuId_Capture_Video_Record, true);
-		m_submenuVideoCapture.Enable(MenuId_Capture_Video_Stop, false);
-		m_submenuVideoCapture.Enable(MenuId_Capture_Video_IncludeAudio, true);
+		SetCaptureMenu(false);
+	}
+}
+
+void MainEmuFrame::SetCaptureMenu(const bool active)
+{
+	m_submenuVideoCapture.Enable(MenuId_Capture_Video_Record, !active);
+	m_submenuVideoCapture.Enable(MenuId_Capture_Video_Stop, active);
+	m_submenuVideoCapture.Enable(MenuId_Capture_Video_IncludeAudio, !active);
+
+	m_submenuAudioCapture.Enable(MenuId_Capture_Audio_16Bit, !active);
+	m_submenuAudioCapture.Enable(MenuId_Capture_Audio_24Bit, !active);
+	m_submenuAudioCapture.Enable(MenuId_Capture_Audio_32Bit, !active);
+}
+
+void MainEmuFrame::Menu_Capture_Audio_Bitrate_Click(wxCommandEvent& event)
+{
+	switch (event.GetId())
+	{
+	case MenuId_Capture_Audio_16Bit:
+		g_Conf->AudioCapture.BitsPerSameple = AudioBits_16;
+		break;
+	case MenuId_Capture_Audio_24Bit:
+		g_Conf->AudioCapture.BitsPerSameple = AudioBits_24;
+		break;
+	case MenuId_Capture_Audio_32Bit:
+		g_Conf->AudioCapture.BitsPerSameple = AudioBits_32;
+		break;
+		jNO_DEFAULT
 	}
 }
 

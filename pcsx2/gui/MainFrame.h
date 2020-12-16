@@ -117,6 +117,7 @@ protected:
 
 	wxMenu&	m_menuCapture;
 	wxMenu&	m_submenuVideoCapture;
+	wxMenu& m_submenuAudioCapture;
 	wxMenu&	m_submenuScreenshot;
 
 #ifndef DISABLE_RECORDING
@@ -150,6 +151,7 @@ public:
 
 	bool IsPaused() const { return GetMenuBar()->IsChecked(MenuId_Sys_SuspendResume); }
 	void UpdateCdvdSrcSelection();
+	void UpdateAudioCaptureSelections();
 	void RemoveCdvdMenu();
 	void EnableMenuItem(int id, bool enable);
 	void CheckMenuItem(int id, bool checked);
@@ -251,6 +253,8 @@ protected:
 
 	void Menu_Capture_Video_ToggleCapture_Click(wxCommandEvent& event);
 	void Menu_Capture_Video_IncludeAudio_Click(wxCommandEvent& event);
+	void Menu_Capture_Audio_Bitrate_Click(wxCommandEvent& event);
+	void SetCaptureMenu(const bool active);
 	void Menu_Capture_Screenshot_Screenshot_Click(wxCommandEvent& event);
 	void Menu_Capture_Screenshot_Screenshot_As_Click(wxCommandEvent& event);
 

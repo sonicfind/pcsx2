@@ -953,6 +953,7 @@ void AppConfig::FramerateOptions::LoadSave( IniInterface& ini )
 AppConfig::CaptureOptions::CaptureOptions()
 {
 	EnableAudio = false;
+	BitsPerSameple = AudioBits_16;
 }
 
 void AppConfig::CaptureOptions::LoadSave(IniInterface& ini)
@@ -960,6 +961,17 @@ void AppConfig::CaptureOptions::LoadSave(IniInterface& ini)
 	ScopedIniGroup path(ini, L"Capture");
 
 	IniEntry( EnableAudio );
+
+	static const wxChar* AudioSettings[] =
+	{
+		L"16_Bit",
+		L"24_Bit",
+		L"32_Bit",
+		// WARNING: array must be NULL terminated to compute it size
+		NULL
+	};
+
+	ini.EnumEntry(L"BitsPerSameple", BitsPerSameple, AudioSettings, BitsPerSameple);
 }
 
 AppConfig::UiTemplateOptions::UiTemplateOptions()
