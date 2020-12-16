@@ -124,7 +124,7 @@ bool InputRecordingFile::open(const wxString path, bool newRecording)
 	return false;
 }
 
-bool InputRecordingFile::OpenNew(const wxString path, bool fromSavestate)
+bool InputRecordingFile::OpenNew(const wxString& path, bool fromSavestate)
 {
 	if (fromSavestate)
 	{
@@ -148,7 +148,7 @@ bool InputRecordingFile::OpenNew(const wxString path, bool fromSavestate)
 	return false;
 }
 
-bool InputRecordingFile::OpenExisting(const wxString path)
+bool InputRecordingFile::OpenExisting(const wxString& path)
 {
 	return open(path, false);
 }
