@@ -13,20 +13,11 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// Note the file is mostly a copy paste of the WavFile.h from SoundTouch library. It was
-// shrunken to support only output 16 bits wav files
+// Note the file is mostly an altered copy paste of the WavFile.h from SoundTouch library. It was
+// shrunken to only handle simple wav file creation to 16bit, 24bit (new addition), and 32bit.
 
 #include "PrecompiledHeader.h"
-#include <stdio.h>
-#include <stdexcept>
-#include <string>
-#include <cstring>
-#include <assert.h>
-#include <limits.h>
-
 #include "WavFile.h"
-
-using namespace std;
 
 static const char riffStr[] = "RIFF";
 static const char waveStr[] = "WAVE";
@@ -35,28 +26,26 @@ static const char dataStr[] = "data";
 
 //////////////////////////////////////////////////////////////////////////////
 //
-// Class WavOutFile
+// Class WavFile
 //
 
-WavOutFile::WavOutFile(const char* fileName, int sampleRate, int bits, int channels)
+WavFile::WavFile(const char* fileName, int bits, int channels)
 {
-	bytesWritten = 0;
 	fptr = fopen(fileName, "wb");
 	if (fptr == nullptr)
 	{
-		string msg = "Error : Unable to open file \"";
+		std::string msg = "Error : Unable to open file \"";
 		msg += fileName;
 		msg += "\" for writing.";
 		//pmsg = msg.c_str;
-		throw runtime_error(msg);
+		throw std::runtime_error(msg);
 	}
 
-	fillInHeader(sampleRate, bits, channels);
+	fillInHeader(bits, channels);
 	writeHeader();
 }
 
-
-WavOutFile::~WavOutFile()
+WavFile::~WavFile()
 {
 	if (fptr)
 	{
@@ -65,9 +54,7 @@ WavOutFile::~WavOutFile()
 	}
 }
 
-
-
-void WavOutFile::fillInHeader(uint sampleRate, uint bits, uint channels)
+void WavFile::fillInHeader(uint bits, uint channels)
 {
 	// fill in the 'riff' part..
 
@@ -87,11 +74,10 @@ void WavOutFile::fillInHeader(uint sampleRate, uint bits, uint channels)
 	header.format.format_len = 0x10;
 	header.format.fixed = 1;
 	header.format.channel_number = (short)channels;
-	header.format.sample_rate = (int)sampleRate;
+	header.format.sample_rate = 48000;
 	header.format.bits_per_sample = (short)bits;
-	header.format.byte_per_sample = (short)(bits * channels / 8);
-	header.format.byte_rate = header.format.byte_per_sample * (int)sampleRate;
-	header.format.sample_rate = (int)sampleRate;
+	header.format.bytes_per_sample = (short)((bits * channels) >> 3);
+	header.format.byte_rate = 48000 * header.format.bytes_per_sample;
 
 	// fill in the 'data' part..
 
@@ -101,50 +87,92 @@ void WavOutFile::fillInHeader(uint sampleRate, uint bits, uint channels)
 	header.data.data_len = 0;
 }
 
-
-void WavOutFile::finishHeader()
+void WavFile::finishHeader()
 {
 	// supplement the file length into the header structure
-	header.riff.package_len = bytesWritten + 36;
-	header.data.data_len = bytesWritten;
+	header.data.data_len = (uint)ftell(fptr) - sizeof(WavHeader);
+	if (header.data.data_len & 1)
+		fputc(0, fptr);
 
+	header.riff.package_len = header.data.data_len + 36;
 	writeHeader();
 }
 
-
-
-void WavOutFile::writeHeader()
+void WavFile::writeHeader()
 {
-	int res;
-
 	// write the supplemented header in the beginning of the file
 	fseek(fptr, 0, SEEK_SET);
-	res = fwrite(&header, sizeof(header), 1, fptr);
-	if (res != 1)
+	if (fwrite(&header, sizeof(header), 1, fptr) != 1)
 	{
-		throw runtime_error("Error while writing to a wav file.");
+		throw std::runtime_error("Error while writing to a wav file.");
 	}
 
 	// jump back to the end of the file
 	fseek(fptr, 0, SEEK_END);
 }
 
-
-void WavOutFile::write(const short* buffer, int numElems)
+void WavFile::write(const StereoOut16& samples)
 {
-	int res;
-
-	// 16bit format & 16 bit samples
-
-	assert(header.format.bits_per_sample == 16);
-	if (numElems < 1)
-		return; // nothing to do
-
-	res = fwrite(buffer, 2, numElems, fptr);
-
-	if (res != numElems)
+	if (fwrite(&samples, 2, 2, fptr) != 2)
 	{
-		throw runtime_error("Error while writing to a wav file.");
+		throw std::runtime_error("Error while writing to a wav file.");
 	}
-	bytesWritten += 2 * numElems;
+}
+
+void WavFile::write(StereoOut32 samples)
+{
+	int res = 0;
+	
+	switch (header.format.bits_per_sample)
+	{
+	case 16:
+	{
+		StereoOut16 temp = samples.DownSample();
+		if (header.format.channel_number == 1)
+		{
+			s16 mono = (temp.Left >> 1) + (temp.Right >> 1);
+			res = fwrite(&mono, 2, 1, fptr);
+		}
+		else
+			res = fwrite(&temp, 2, 2, fptr);
+		break;
+	}
+	case 24:
+	{
+		
+		if (header.format.channel_number == 1)
+		{
+			s32 temp = (samples.Left >> 5) + (samples.Right >> 5);
+			res = fwrite(&temp, 3, 1, fptr);
+		}
+		else
+		{
+			samples.Left >>= 4;
+			samples.Right >>= 4;
+			res = fwrite(&samples.Left, 3, 1, fptr);
+			res += fwrite(&samples.Right, 3, 1, fptr);
+		}
+		break;
+	}
+	case 32:
+	{
+		if (header.format.channel_number == 1)
+		{
+			s32 temp = (samples.Left << 3) + (samples.Right << 3);
+			res = fwrite(&temp, 4, 1, fptr);
+		}
+		else
+		{
+			samples.Left <<= 4;
+			samples.Right <<= 4;
+			res = fwrite(&samples, 4, 2, fptr);
+		}
+		break;
+	}
+	}
+
+	if (res != header.format.channel_number)
+	{
+		throw std::runtime_error("Error while writing to a wav file.");
+	}
 }

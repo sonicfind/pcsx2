@@ -19,7 +19,7 @@
 #ifndef WAVFILE_H
 #define WAVFILE_H
 
-#include <stdio.h>
+#include "Global.h"
 
 #ifndef uint
 typedef unsigned int uint;
@@ -43,7 +43,7 @@ typedef struct
 	short channel_number;
 	int sample_rate;
 	int byte_rate;
-	short byte_per_sample;
+	short bytes_per_sample;
 	short bits_per_sample;
 } WavFormat;
 
@@ -65,7 +65,7 @@ typedef struct
 
 
 /// Class for writing WAV audio files.
-class WavOutFile
+class WavFile
 {
 private:
 	/// Pointer to the WAV file
@@ -74,11 +74,8 @@ private:
 	/// WAV file header data.
 	WavHeader header;
 
-	/// Counter of how many bytes have been written to the file so far.
-	int bytesWritten;
-
 	/// Fills in WAV file header information.
-	void fillInHeader(const uint sampleRate, const uint bits, const uint channels);
+	void fillInHeader(const uint bits, const uint channels);
 
 	/// Finishes the WAV file header by supplementing information of amount of
 	/// data written to file etc
@@ -90,20 +87,23 @@ private:
 public:
 	/// Constructor: Creates a new WAV file. Throws a 'runtime_error' exception
 	/// if file creation fails.
-	WavOutFile(const char* fileName, ///< Filename
-			   int sampleRate,       ///< Sample rate (e.g. 44100 etc)
-			   int bits,             ///< Bits per sample (8 or 16 bits)
+	WavFile(const char* fileName, ///< Filename
+			   int bits,             ///< Bits per sample (16, 24 or 16 bits)
 			   int channels          ///< Number of channels (1=mono, 2=stereo)
 	);
 
 	/// Destructor: Finalizes & closes the WAV file.
-	~WavOutFile();
+	~WavFile();
+	
+	/// Write data to WAV file. Throws a 'runtime_error' exception if writing to
+	/// file fails.
+	void write(const StereoOut16& samples);
 
 	/// Write data to WAV file. Throws a 'runtime_error' exception if writing to
 	/// file fails.
-	void write(const short* buffer, ///< Pointer to sample data buffer.
-			   int numElems         ///< How many array items are to be written to file.
-	);
+	///
+	/// Use the short* overloaded function for core dumping
+	void write(StereoOut32 samples);
 };
 
 #endif

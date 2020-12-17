@@ -15,20 +15,17 @@
 
 #include "PrecompiledHeader.h"
 #include "Global.h"
-#ifdef __POSIX__
+#include "App.h"
 #include "WavFile.h"
-#else
-#include "soundtouch/source/SoundStretch/WavFile.h"
-#endif
 
-static WavOutFile* _new_WavOutFile(const char* destfile)
+static WavFile* _new_WavFile(const char* destfile)
 {
-	return new WavOutFile(destfile, 48000, 16, 2);
+	return new WavFile(destfile, 16, 2);
 }
 
 namespace WaveDump
 {
-	static WavOutFile* m_CoreWav[2][CoreSrc_Count];
+	static WavFile* m_CoreWav[2][CoreSrc_Count];
 
 	static const char* m_tbl_CoreOutputTypeNames[CoreSrc_Count] =
 		{
@@ -63,7 +60,7 @@ namespace WaveDump
 
 				try
 				{
-					m_CoreWav[cidx][srcidx] = _new_WavOutFile(wavfilename);
+					m_CoreWav[cidx][srcidx] = _new_WavFile(wavfilename);
 				}
 				catch (std::runtime_error& ex)
 				{
@@ -92,7 +89,7 @@ namespace WaveDump
 		if (!IsDevBuild)
 			return;
 		if (m_CoreWav[coreidx][src] != nullptr)
-			m_CoreWav[coreidx][src]->write((s16*)&sample, 2);
+			m_CoreWav[coreidx][src]->write(sample);
 	}
 
 	void WriteCore(uint coreidx, CoreSourceType src, s16 left, s16 right)
@@ -107,7 +104,7 @@ using namespace Threading;
 
 bool WavRecordEnabled = false;
 
-static WavOutFile* m_wavrecord = nullptr;
+static WavFile* m_wavrecord = nullptr;
 static Mutex WavRecordMutex;
 
 int RecordStart(const std::string* filename)
@@ -117,9 +114,9 @@ int RecordStart(const std::string* filename)
 		ScopedLock lock(WavRecordMutex);
 		safe_delete(m_wavrecord);
 		if (filename)
-			m_wavrecord = new WavOutFile(filename->c_str(), 48000, 16, 2);
+			m_wavrecord = new WavFile(filename->c_str(), (2 + g_Conf->AudioCapture.BitsPerSameple) * 8, g_Conf->AudioCapture.ChannelConfig - 2);
 		else
-			m_wavrecord = new WavOutFile("audio_recording.wav", 48000, 16, 2);
+			m_wavrecord = new WavFile("audio_recording.wav", (2 + g_Conf->AudioCapture.BitsPerSameple) * 8, g_Conf->AudioCapture.ChannelConfig - 2);
 		WavRecordEnabled = true;
 		return 1;
 	}
@@ -141,10 +138,10 @@ void RecordStop()
 	safe_delete(m_wavrecord);
 }
 
-void RecordWrite(const StereoOut16& sample)
+void RecordWrite(const StereoOut32& sample)
 {
 	ScopedLock lock(WavRecordMutex);
 	if (m_wavrecord == nullptr)
 		return;
-	m_wavrecord->write((s16*)&sample, 2);
+	m_wavrecord->write(sample);
 }
