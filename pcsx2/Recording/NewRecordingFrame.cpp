@@ -24,15 +24,38 @@ NewRecordingFrame::NewRecordingFrame(wxWindow* parent)
 {
 	wxPanel* panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL, _("panel"));
 
-	wxFlexGridSizer* fgs = new wxFlexGridSizer(4, 2, 20, 20);
+	wxFlexGridSizer* fgs = new wxFlexGridSizer(7, 2, 20, 20);
 	wxBoxSizer* container = new wxBoxSizer(wxVERTICAL);
 
 	m_fileLabel = new wxStaticText(panel, wxID_ANY, _("File Path"), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
-	m_authorLabel = new wxStaticText(panel, wxID_ANY, _("Author"), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
-	m_fromLabel = new wxStaticText(panel, wxID_ANY, _("Record From"), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
+	m_filePicker = new wxFilePickerCtrl(panel, MenuIds_New_Recording_Frame_File, wxEmptyString, "File", L"pcsx2 recording file(*.pirec, *.p2m2)|*.pirec;*.p2m2",
+																	wxDefaultPosition, wxDefaultSize, wxFLP_SAVE | wxFLP_OVERWRITE_PROMPT | wxFLP_USE_TEXTCTRL);
+	m_filePicker->GetPickerCtrl()->Bind(wxEVT_FILEPICKER_CHANGED, &NewRecordingFrame::OnFileDirChange, this);
+	m_filePicker->Bind(wxEVT_FILEPICKER_CHANGED, &NewRecordingFrame::OnFileChanged, this);
+	m_fileBrowsed = false;
 
-	m_filePicker = new wxFilePickerCtrl(panel, MenuIds_New_Recording_Frame_File, wxEmptyString, "File", L"p2m2 file(*.p2m2)|*.p2m2", wxDefaultPosition, wxDefaultSize, wxFLP_SAVE | wxFLP_OVERWRITE_PROMPT | wxFLP_USE_TEXTCTRL);
+	m_authorLabel = new wxStaticText(panel, wxID_ANY, _("Author"), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
 	m_authorInput = new wxTextCtrl(panel, MenuIds_New_Recording_Frame_Author, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
+
+	m_ControllerLabel = new wxStaticText(panel, wxID_ANY, _("Controller Slots"), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
+	const char* slots[2][4] = {{"1A", "1B", "1C", "1D"}, {"2A", "2B", "2C", "2D"}};
+#ifdef _WIN32
+	m_ControllerCheck[0] = new wxCheckListBox(panel, MenuIds_New_Recording_Frame_Port_0, wxDefaultPosition, wxDefaultSize,
+												wxArrayString(4, slots[0]), wxLB_MULTIPLE, wxDefaultValidator, "Port 1");
+	m_ControllerCheck[1] = new wxCheckListBox(panel, MenuIds_New_Recording_Frame_Port_1, wxDefaultPosition, wxDefaultSize,
+												wxArrayString(4, slots[1]), wxLB_MULTIPLE, wxDefaultValidator, "Port 2");
+#else
+	m_ControllerCheck[0] = new wxCheckListBox(panel, MenuIds_New_Recording_Frame_Port_0, wxDefaultPosition, wxDefaultSize,
+												wxArrayString(1, slots[0]), wxLB_MULTIPLE, wxDefaultValidator, "Port 1");
+	m_ControllerCheck[1] = new wxCheckListBox(panel, MenuIds_New_Recording_Frame_Port_1, wxDefaultPosition, wxDefaultSize,
+												wxArrayString(1, slots[1]), wxLB_MULTIPLE, wxDefaultValidator, "Port 2");
+#endif
+
+	m_ControllerCheck[0]->Bind(wxEVT_CHECKLISTBOX, &NewRecordingFrame::OnBoxCheck, this);
+	m_ControllerCheck[1]->Bind(wxEVT_CHECKLISTBOX, &NewRecordingFrame::OnBoxCheck, this);
+	m_pads = 0;
+
+	m_fromLabel = new wxStaticText(panel, wxID_ANY, _("Record From"), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
 	m_fromChoice = new wxChoice(panel, MenuIds_New_Recording_Frame_From, wxDefaultPosition, wxDefaultSize, NULL);
 
 	m_startRecording = new wxButton(panel, wxID_OK, _("Browse Required"), wxDefaultPosition, wxDefaultSize);
@@ -45,6 +68,12 @@ NewRecordingFrame::NewRecordingFrame(wxWindow* parent)
 	fgs->Add(m_authorLabel, 1);
 	fgs->Add(m_authorInput, 1, wxEXPAND);
 
+	fgs->Add(m_ControllerLabel, 1);
+	fgs->Add(new wxStaticText(panel, wxID_ANY, _(""), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER), 1); //Empty spot
+
+	fgs->Add(m_ControllerCheck[0], 1);
+	fgs->Add(m_ControllerCheck[1], 1);
+
 	fgs->Add(m_fromLabel, 1);
 	fgs->Add(m_fromChoice, 1, wxEXPAND);
 
@@ -55,17 +84,13 @@ NewRecordingFrame::NewRecordingFrame(wxWindow* parent)
 	panel->SetSizer(container);
 	panel->GetSizer()->Fit(this);
 	Centre();
-
-	m_fileBrowsed = false;
-	m_filePicker->GetPickerCtrl()->Bind(wxEVT_FILEPICKER_CHANGED, &NewRecordingFrame::OnFileDirChange, this);
-	m_filePicker->Bind(wxEVT_FILEPICKER_CHANGED, &NewRecordingFrame::OnFileChanged, this);
 }
 
 int NewRecordingFrame::ShowModal(const bool isCoreThreadOpen)
 {
-	static const char* choices[2] = {"Boot", "Current Frame"};
-	m_fromChoice->Set(wxArrayString(1 + isCoreThreadOpen, &choices[0]));
-	m_fromChoice->SetSelection(isCoreThreadOpen);
+	static const char* choices[3] = {"Full Boot", "Fast Boot", "Current Frame"};
+	m_fromChoice->Set(wxArrayString(2 + isCoreThreadOpen, choices));
+	m_fromChoice->SetSelection(1 + isCoreThreadOpen);
 	return wxDialog::ShowModal();
 }
 
@@ -81,6 +106,12 @@ void NewRecordingFrame::OnFileChanged(wxFileDirPickerEvent& event)
 	EnableOkBox();
 }
 
+void NewRecordingFrame::OnBoxCheck(wxCommandEvent& event)
+{
+	m_pads ^= 1 << (((event.GetId() - MenuIds_New_Recording_Frame_Port_0) << 2) + event.GetInt());
+	EnableOkBox();
+}
+
 void NewRecordingFrame::EnableOkBox()
 {
 	if (m_filePicker->GetPath().length() == 0)
@@ -91,8 +122,16 @@ void NewRecordingFrame::EnableOkBox()
 	}
 	else if (m_fileBrowsed)
 	{
-		m_startRecording->SetLabel(_("Start"));
-		m_startRecording->Enable(true);
+		if (m_pads == 0)
+		{
+			m_startRecording->SetLabel(_("No Pads"));
+			m_startRecording->Enable(false);
+		}
+		else
+		{
+			m_startRecording->SetLabel(_("Start"));
+			m_startRecording->Enable(true);
+		}
 	}
 }
 
@@ -116,5 +155,10 @@ wxString NewRecordingFrame::GetAuthor() const
 int NewRecordingFrame::GetFrom() const
 {
 	return m_fromChoice->GetSelection();
+}
+
+wxByte NewRecordingFrame::GetPads() const noexcept
+{
+	return m_pads;
 }
 #endif

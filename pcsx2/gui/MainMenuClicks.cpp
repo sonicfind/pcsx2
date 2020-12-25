@@ -1037,8 +1037,8 @@ void MainEmuFrame::Menu_Recording_Play_Click(wxCommandEvent& event)
 	if (!initiallyPaused)
 		g_InputRecordingControls.PauseImmediately();
 
-	wxFileDialog openFileDialog(this, _("Select P2M2 record file."), L"", L"",
-								L"p2m2 file(*.p2m2)|*.p2m2", wxFD_OPEN);
+	wxFileDialog openFileDialog(this, _("Select PIREC/P2M2 record file."), L"", L"",
+								L"pcsx2 recording file (*.pirec,*.p2m2)|*.pirec;*.p2m2", wxFD_OPEN);
 	if (openFileDialog.ShowModal() == wxID_CANCEL)
 	{
 		if (!initiallyPaused)
