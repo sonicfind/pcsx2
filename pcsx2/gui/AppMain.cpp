@@ -1084,6 +1084,7 @@ void Pcsx2App::OnMainFrameClosed( wxWindowID id )
 	if (g_InputRecording.IsActive())
 	{
 		g_InputRecording.Stop();
+		AppSaveSettings();
 	}
 #endif
 
