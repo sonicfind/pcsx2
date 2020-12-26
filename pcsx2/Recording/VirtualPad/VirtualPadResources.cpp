@@ -88,7 +88,7 @@ void AnalogStick::UpdateGuiElement(std::queue<VirtualPadElement*>& renderQueue, 
 	}
 
 	// We render the analog sticks as long as they are not in the neutral position
-	if (!(analogStick.xVector.val == PadData::ANALOG_VECTOR_NEUTRAL && analogStick.yVector.val == PadData::ANALOG_VECTOR_NEUTRAL))
+	if (!(analogStick.xVector.val == PadData::s_ANALOG_VECTOR_NEUTRAL && analogStick.yVector.val == PadData::s_ANALOG_VECTOR_NEUTRAL))
 		renderQueue.push(this);
 	else if (analogStick.currentlyRendered)
 	{

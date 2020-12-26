@@ -666,7 +666,6 @@ void Pcsx2App::HandleEvent(wxEvtHandler* handler, wxEventFunction func, wxEvent&
 		if (g_InputRecording.IsInitialLoad())
 			g_InputRecording.FailedSavestate();
 #endif
-
 		CoreThread.Resume();
 	}
 	// ----------------------------------------------------------------------------

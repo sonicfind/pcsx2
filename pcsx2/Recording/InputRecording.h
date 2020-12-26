@@ -36,7 +36,7 @@ public:
 
 	// Main handler for ingesting input data and either saving it to the recording file (recording)
 	// or mutating it to the contents of the recording file (replaying)
-	void ControllerInterrupt(u8& data, u8& port, u16& BufCount, u8 buf[]);
+	void ControllerInterrupt(const u8 data, const u8 port, const u8 slot, const u16 bufCount, u8& bufVal);
 
 	// The running frame counter for the input recording
 	s32 GetFrameCounter();
@@ -70,12 +70,12 @@ public:
 	wxString RecordingModeTitleSegment();
 
 	// Sets input recording to Record Mode
-	void SetToRecordMode();
+	void SetToRecordMode(const bool log = true);
 
 	// Sets input recording to Replay Mode
-	void SetToReplayMode();
+	void SetToReplayMode(const bool log = true);
 
-	// Set the running frame counter for the input recording to an arbitrary value
+	// Sets the running frame counter for the input recording to an arbitrary value
 	void SetFrameCounter(u32 newGFrameCount);
 
 	// Sets up all values and prints console logs pertaining to the start of a recording
@@ -84,7 +84,7 @@ public:
 	/// Functions called from GUI
 
 	// Create a new input recording file
-	bool Create(wxString filename, const bool fromSaveState, wxString authorName);
+	bool Create(wxString fileName, const char startType, wxString authorName, wxByte slots);
 	// Play an existing input recording from a file
 	bool Play(wxString filename);
 	// Stop the active input recording
@@ -92,7 +92,7 @@ public:
 	// Logs the padData and redraws the virtualPad windows of active pads
 	void LogAndRedraw();
 	// Displays the VirtualPad window for the chosen pad
-	void ShowVirtualPad(const int port);
+	void ShowVirtualPad(const int arrayPosition);
 	// Resets emulation to the beginning of a recording
 	bool GoToFirstFrame();
 	// Resets a recording if the base savestate could not be loaded at the start
@@ -106,8 +106,8 @@ private:
 		Replaying,
 	};
 
-	static const int CONTROLLER_PORT_ONE = 0;
-	static const int CONTROLLER_PORT_TWO = 1;
+	static const u8 s_NUM_PORTS = 2;
+	static const u8 s_NUM_SLOTS = 4;
 
 	// 0x42 is the magic number to indicate the default controller read query
 	// See - PAD.cpp::PADpoll - https://github.com/PCSX2/pcsx2/blob/master/pcsx2/PAD/Windows/PAD.cpp#L1255
@@ -117,23 +117,37 @@ private:
 	static const u8 READ_DATA_AND_VIBRATE_SECOND_BYTE = 0x5A;
 
 	// DEPRECATED: Slated for removal
-	bool fInterruptFrame = false;
-	InputRecordingFile inputRecordingData;
-	bool initialLoad = false;
-	u32 startingFrame = 0;
-	s32 frameCounter = 0;
-	bool incrementUndo = false;
-	InputRecordingMode state = InputRecording::InputRecordingMode::NotActive;
+	bool m_fInterruptFrame = false;
+	InputRecordingFile m_inputRecordingData;
+	bool m_initialLoad = false;
+	u32 m_startingFrame = 0;
+	s32 m_frameCounter = 0;
+	bool m_incrementRedo = false;
+	InputRecordingMode m_state = InputRecording::InputRecordingMode::NotActive;
 
 	// Array of usable pads (currently, only 2)
 	struct InputRecordingPad
 	{
 		// Controller Data
-		std::unique_ptr<PadData> padData;
+		std::unique_ptr<PadData> m_padData;
 		// VirtualPad
-		VirtualPad* virtualPad;
+		VirtualPad* m_virtualPad;
+		// Recording Mode
+		InputRecordingMode m_state;
+		// File seek offset
+		u8 m_seekOffset;
 		InputRecordingPad();
-	} pads[2];
+	} m_pads[s_NUM_PORTS][s_NUM_SLOTS];
+
+	// Holds the multitap and fastboot settings from before loading a recording
+	struct 
+	{
+		bool multitaps[s_NUM_PORTS] = {false, false};
+		bool fastBoot = false;
+	} m_buffers;
+
+	// Enables and disables virtual pad slots in correspondance with the recording
+	void SetPads(const bool newRecording);
 
 	// Resolve the name and region of the game currently loaded using the GameDB
 	// If the game cannot be found in the DB, the fallback is the ISO filename

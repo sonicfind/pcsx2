@@ -62,3 +62,6 @@ s32 PADqueryMtap(u8 port);
 void PADsetSettingsDir(const char* dir);
 void PADDoFreezeOut(void* dest);
 void PADDoFreezeIn(pxInputStream& infp);
+#ifndef DISABLE_RECORDING
+void PADsetupInputRecording();
+#endif

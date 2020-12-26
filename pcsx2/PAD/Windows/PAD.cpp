@@ -41,6 +41,10 @@
 #include "Utilities/pxStreams.h"
 #include "AppCoreThread.h"
 
+#ifndef DISABLE_RECORDING
+#include "Recording/InputRecording.h"
+#endif
+
 #define WMA_FORCE_UPDATE (WM_APP + 0x537)
 #define FORCE_UPDATE_WPARAM ((WPARAM)0x74328943)
 #define FORCE_UPDATE_LPARAM ((LPARAM)0x89437437)
@@ -273,6 +277,11 @@ void UpdateEnabledDevices(int updateList = 0)
 	// Enable all devices I might want.  Can ignore the rest.
 	RefreshEnabledDevices(updateList);
 	// Figure out which pads I'm getting input for.
+#ifndef DISABLE_RECORDING
+	if (g_InputRecording.IsActive())
+		goto Disable_Devices;
+#endif
+
 	for (int port = 0; port < 2; port++)
 	{
 		for (int slot = 0; slot < 4; slot++)
@@ -287,6 +296,9 @@ void UpdateEnabledDevices(int updateList = 0)
 			}
 		}
 	}
+#ifndef DISABLE_RECORDING
+	Disable_Devices:
+#endif
 	for (int i = 0; i < dm->numDevices; i++)
 	{
 		Device* dev = dm->devices[i];
@@ -1825,3 +1837,12 @@ void PADDoFreezeIn(pxInputStream& infp)
 	if (PADfreeze(FREEZE_LOAD, &fP) != 0)
 		throw std::runtime_error(" * PAD: Error loading state!\n");
 }
+
+#ifndef DISABLE_RECORDING
+void PADsetupInputRecording()
+{
+	for (int port = 0; port < 2; ++port)
+		for (int slot = 0; slot < 4; ++slot)
+			pads[port][slot].enabled = g_InputRecording.GetInputRecordingData().IsSlotUsed(port, slot);
+}
+#endif
