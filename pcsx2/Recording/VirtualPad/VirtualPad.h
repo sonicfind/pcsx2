@@ -37,50 +37,38 @@
 
 class VirtualPad : public wxFrame
 {
-public:
-	VirtualPad(wxWindow* parent, int controllerPort, AppConfig::InputRecordingOptions& options);
-	// Updates the VirtualPad's data if necessary, as well as updates the provided PadData if the VirtualPad overrides it
-	// - PadData will not be updated if ReadOnly mode is set
-	// - returns a bool to indicate if the PadData has been updated
-	bool UpdateControllerData(u16 const bufIndex, PadData* padData);
-	// Enables/Disables read only mode and enables/disables GUI widgets
-	void SetReadOnlyMode(bool readOnly);
-	// To be called at maximum, once per frame to update widget's value and re-render the VirtualPad's graphics
-	void Redraw();
-
-private:
 	/// Constants
-	const wxSize SPINNER_SIZE = wxSize(100, 40);
-	static const int ANALOG_SLIDER_WIDTH = 185;
-	static const int ANALOG_SLIDER_HEIGHT = 30;
+	static const wxSize s_SPINNER_SIZE;
+	static const int s_ANALOG_SLIDER_WIDTH = 185;
+	static const int s_ANALOG_SLIDER_HEIGHT = 30;
 
-	static const int PRESSURE_MAX = 255;
-	static const int ANALOG_NEUTRAL = 127;
-	static const int ANALOG_MAX = 255;
+	static const int s_PRESSURE_MAX = 255;
+	static const int s_ANALOG_NEUTRAL = 127;
+	static const int s_ANALOG_MAX = 255;
 
 	AppConfig::InputRecordingOptions& options;
 
-	bool clearScreenRequired = false;
-	bool ignoreRealController = false;
+	bool m_clearScreenRequired = false;
+	bool m_ignoreRealController = false;
 	// When enabled, forces the VirtualPad to be re-rendered even if no updates are made.
 	// This helps to make sure the UI is rendered prior to receiving data from the controller
-	bool manualRedrawMode = false;
-	bool readOnlyMode = false;
+	bool m_manualRedrawMode = false;
+	bool m_readOnlyMode = false;
 
-	VirtualPadData virtualPadData;
+	VirtualPadData m_virtualPadData;
 
-	std::vector<VirtualPadElement*> virtualPadElements;
-	std::queue<VirtualPadElement*> renderQueue;
+	std::vector<VirtualPadElement*> m_virtualPadElements;
+	std::queue<VirtualPadElement*> m_renderQueue;
 
 	void enableUiElements(bool enable);
 
 	/// GUI Elements
-	wxCheckBox* ignoreRealControllerBox;
-	wxButton* resetButton;
+	wxCheckBox* m_ignoreRealControllerBox;
+	wxButton* m_resetButton;
 
-	std::map<wxWindowID, ControllerNormalButton*> buttonElements;
-	std::map<wxWindowID, ControllerPressureButton*> pressureElements;
-	std::map<wxWindowID, AnalogVector*> analogElements;
+	std::map<wxWindowID, ControllerNormalButton*> m_buttonElements;
+	std::map<wxWindowID, ControllerPressureButton*> m_pressureElements;
+	std::map<wxWindowID, AnalogVector*> m_analogElements;
 
 	/// Event Listeners
 	void OnMoveAround(wxMoveEvent& event);
@@ -98,7 +86,7 @@ private:
 	void OnResetButton(wxCommandEvent& event);
 
 	/// GUI Creation Utility Functions
-	float scalingFactor = 1.0;
+	float m_scalingFactor = 1.0;
 	bool floatCompare(float A, float B, float epsilon = 0.005f);
 
 	wxSize ScaledSize(wxSize size);
@@ -113,6 +101,16 @@ private:
 	void InitNormalButtonGuiElements(ControllerNormalButton& btn, ImageFile image, wxWindow* parentWindow, wxPoint checkboxCoord);
 	void InitAnalogStickGuiElements(AnalogStick& analog, wxWindow* parentWindow, wxPoint centerPoint, int radius, wxPoint xSliderPoint,
 									wxPoint ySliderPoint, bool flipYSlider, wxPoint xSpinnerPoint, wxPoint ySpinnerPoint, bool rightAlignedSpinners = false);
-};
 
+public:
+	VirtualPad(wxWindow* parent, int controllerPort, AppConfig::InputRecordingOptions& options);
+	// Updates the VirtualPad's data if necessary, as well as updates the provided PadData if the VirtualPad overrides it
+	// - PadData will not be updated if ReadOnly mode is set
+	// - returns a bool to indicate if the PadData has been updated
+	bool UpdateControllerData(u16 const bufIndex, PadData* padData);
+	// Enables/Disables read only mode and enables/disables GUI widgets
+	void SetReadOnlyMode(bool readOnly);
+	// To be called at maximum, once per frame to update widget's value and re-render the VirtualPad's graphics
+	void Redraw();
+};
 #endif

@@ -189,7 +189,7 @@ wxWindowID SwapOrReset_Iso(wxWindow* owner, IScopedCoreThread& core_control, con
 		dialog += dialog.Heading(_("Do you want to swap discs or boot the new image (via system reset)?"));
 
 #ifndef DISABLE_RECORDING
-		if (g_InputRecording.IsActive() && g_InputRecording.GetInputRecordingData().FromSaveState())
+		if (g_InputRecording.IsActive() && g_InputRecording.GetInputRecordingData().FromSavestate())
 			dialog += dialog.Text(_("\n(Warning: The savestate accompanying the active input recording\nmay not be compatible with the new source)"));
 #endif
 
@@ -250,7 +250,7 @@ wxWindowID SwapOrReset_Disc(wxWindow* owner, IScopedCoreThread& core, const wxSt
 		dialog += dialog.Heading(_("Do you want to swap discs or boot the new disc (via system reset)?"));
 
 #ifndef DISABLE_RECORDING
-		if (g_InputRecording.IsActive() && g_InputRecording.GetInputRecordingData().FromSaveState())
+		if (g_InputRecording.IsActive() && g_InputRecording.GetInputRecordingData().FromSavestate())
 			dialog += dialog.Text(_("\n(Warning: The savestate accompanying the active input recording\nmay not be compatible with the new source)"));
 #endif
 
@@ -302,7 +302,7 @@ wxWindowID SwapOrReset_CdvdSrc(wxWindow* owner, CDVD_SourceType newsrc)
 								 _("Do you want to swap discs or boot the new image (system reset)?"));
 
 #ifndef DISABLE_RECORDING
-		if (g_InputRecording.IsActive() && g_InputRecording.GetInputRecordingData().FromSaveState())
+		if (g_InputRecording.IsActive() && g_InputRecording.GetInputRecordingData().FromSavestate())
 			dialog += dialog.Text(_("\n(Warning: The savestate accompanying the active input recording\nmay not be compatible with the new source)"));
 #endif
 
@@ -1057,7 +1057,7 @@ void MainEmuFrame::Menu_Recording_New_Click(wxCommandEvent& event)
 		{
 			if (g_InputRecording.Create(newRecordingFrame->GetFile(), newRecordingFrame->GetFrom(), newRecordingFrame->GetAuthor()))
 			{
-				if (!g_InputRecording.GetInputRecordingData().FromSaveState())
+				if (!g_InputRecording.GetInputRecordingData().FromSavestate())
 					StartInputRecording();
 				return;
 			}
@@ -1092,7 +1092,7 @@ void MainEmuFrame::Menu_Recording_Play_Click(wxCommandEvent& event)
 		return;
 	}
 
-	if (!g_InputRecording.GetInputRecordingData().FromSaveState())
+	if (!g_InputRecording.GetInputRecordingData().FromSavestate())
 		StartInputRecording();
 }
 
@@ -1106,7 +1106,7 @@ void MainEmuFrame::ApplyFirstFrameStatus()
 			keyCodeStr = '\t' + viewport->GetAssociatedKeyCode(("GoToFirstFrame"));
 
 	cdvd_menu->SetItemLabel(L"Restart Recording" + keyCodeStr);
-	if (g_InputRecording.GetInputRecordingData().FromSaveState())
+	if (g_InputRecording.GetInputRecordingData().FromSavestate())
 		cdvd_menu->SetHelp(L"Loads the savestate that accompanies the active input recording");
 	else
 		cdvd_menu->SetHelp(L"Reboots Emulation");

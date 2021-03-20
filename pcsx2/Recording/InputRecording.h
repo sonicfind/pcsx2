@@ -23,6 +23,48 @@
 class InputRecording
 {
 public:
+	static const u8 s_NUM_PORTS = 2;
+
+private:
+	enum class InputRecordingMode
+	{
+		NotActive,
+		Recording,
+		Replaying,
+	};
+
+	// 0x42 is the magic number to indicate the default controller read query
+	// See - PAD.cpp::PADpoll - https://github.com/PCSX2/pcsx2/blob/master/pcsx2/PAD/Windows/PAD.cpp#L1255
+	static const u8 READ_DATA_AND_VIBRATE_FIRST_BYTE = 0x42;
+	// 0x5A is always the second byte in the buffer when the normal READ_DATA_AND_VIBRATE (0x42) query is executed.
+	// See - PAD.cpp::PADpoll - https://github.com/PCSX2/pcsx2/blob/master/pcsx2/PAD/Windows/PAD.cpp#L1256
+	static const u8 READ_DATA_AND_VIBRATE_SECOND_BYTE = 0x5A;
+
+	// DEPRECATED: Slated for removal
+	bool m_fInterruptFrame = false;
+	InputRecordingFile m_inputRecordingData;
+	bool m_initialLoad = false;
+	u32 m_startingFrame = 0;
+	s32 m_frameCounter = 0;
+	bool m_incrementRedo = false;
+	InputRecordingMode m_state = InputRecordingMode::NotActive;
+	wxString m_savestate;
+
+	// Array of usable pads (currently, only 2)
+	struct InputRecordingPad
+	{
+		// Controller Data
+		std::unique_ptr<PadData> m_padData;
+		// VirtualPad
+		VirtualPad* m_virtualPad;
+		InputRecordingPad();
+	} m_pads[s_NUM_PORTS];
+
+	// Resolve the name and region of the game currently loaded using the GameDB
+	// If the game cannot be found in the DB, the fallback is the ISO filename
+	wxString resolveGameName();
+
+public:
 	// Initializes all VirtualPad windows with "parent" as their base
 	void InitVirtualPadWindows(wxWindow* parent);
 
@@ -35,7 +77,7 @@ public:
 
 	// Main handler for ingesting input data and either saving it to the recording file (recording)
 	// or mutating it to the contents of the recording file (replaying)
-	void ControllerInterrupt(u8& data, u8& port, u16& BufCount, u8 buf[]);
+	void ControllerInterrupt(const u8 data, const u8 port, const u16 bufCount, u8& bufVal);
 
 	// The running frame counter for the input recording
 	s32 GetFrameCounter();
@@ -69,12 +111,12 @@ public:
 	wxString RecordingModeTitleSegment();
 
 	// Sets input recording to Record Mode
-	void SetToRecordMode();
+	void SetToRecordMode(const bool log = true);
 
 	// Sets input recording to Replay Mode
-	void SetToReplayMode();
+	void SetToReplayMode(const bool log = true);
 
-	// Set the running frame counter for the input recording to an arbitrary value
+	// Sets the running frame counter for the input recording to an arbitrary value
 	void SetFrameCounter(u32 newGFrameCount);
 
 	// Sets up all values and prints console logs pertaining to the start of a recording
@@ -83,7 +125,7 @@ public:
 	/// Functions called from GUI
 
 	// Create a new input recording file
-	bool Create(wxString filename, const bool fromSaveState, wxString authorName);
+	bool Create(wxString fileName, const bool fromSavestate, wxString authorName);
 	// Play an existing input recording from a file
 	// Calls a file dialog if it fails to locate the default base savestate
 	bool Play(wxWindow* parent, wxString filename);
@@ -98,49 +140,6 @@ public:
 	void GoToFirstFrame(wxWindow* parent);
 	// Resets a recording if the base savestate could not be loaded at the start
 	void FailedSavestate();
-
-private:
-	enum class InputRecordingMode
-	{
-		NotActive,
-		Recording,
-		Replaying,
-	};
-
-	static const int CONTROLLER_PORT_ONE = 0;
-	static const int CONTROLLER_PORT_TWO = 1;
-
-	// 0x42 is the magic number to indicate the default controller read query
-	// See - PAD.cpp::PADpoll - https://github.com/PCSX2/pcsx2/blob/master/pcsx2/PAD/Windows/PAD.cpp#L1255
-	static const u8 READ_DATA_AND_VIBRATE_FIRST_BYTE = 0x42;
-	// 0x5A is always the second byte in the buffer when the normal READ_DATA_AND_VIBRATE (0x42) query is executed.
-	// See - PAD.cpp::PADpoll - https://github.com/PCSX2/pcsx2/blob/master/pcsx2/PAD/Windows/PAD.cpp#L1256
-	static const u8 READ_DATA_AND_VIBRATE_SECOND_BYTE = 0x5A;
-
-	// DEPRECATED: Slated for removal
-	bool fInterruptFrame = false;
-	InputRecordingFile inputRecordingData;
-	bool initialLoad = false;
-	u32 startingFrame = 0;
-	s32 frameCounter = 0;
-	bool incrementUndo = false;
-	InputRecordingMode state = InputRecording::InputRecordingMode::NotActive;
-	wxString savestate;
-
-	// Array of usable pads (currently, only 2)
-	struct InputRecordingPad
-	{
-		// Controller Data
-		PadData* padData;
-		// VirtualPad
-		VirtualPad* virtualPad;
-		InputRecordingPad();
-		~InputRecordingPad();
-	} pads[2];
-
-	// Resolve the name and region of the game currently loaded using the GameDB
-	// If the game cannot be found in the DB, the fallback is the ISO filename
-	wxString resolveGameName();
 };
 
 extern InputRecording g_InputRecording;

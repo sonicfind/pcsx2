@@ -30,6 +30,16 @@ enum MenuIds_New_Recording_Frame
 // The Dialog to pop-up when recording a new movie
 class NewRecordingFrame : public wxDialog
 {
+	wxStaticText* m_fileLabel;
+	wxFilePickerCtrl* m_filePicker;
+	bool m_fileBrowsed;
+	wxStaticText* m_authorLabel;
+	wxTextCtrl* m_authorInput;
+	wxStaticText* m_fromLabel;
+	wxChoice* m_fromChoice;
+	wxButton* m_startRecording;
+	wxButton* m_cancelRecording;
+
 public:
 	NewRecordingFrame(wxWindow* parent);
 	int ShowModal(const bool isCoreThreadOpen);
@@ -42,16 +52,5 @@ protected:
 	void OnFileDirChange(wxFileDirPickerEvent& event);
 	void OnFileChanged(wxFileDirPickerEvent& event);
 	void EnableOkBox();
-
-private:
-	wxStaticText* m_fileLabel;
-	wxFilePickerCtrl* m_filePicker;
-	bool m_fileBrowsed;
-	wxStaticText* m_authorLabel;
-	wxTextCtrl* m_authorInput;
-	wxStaticText* m_fromLabel;
-	wxChoice* m_fromChoice;
-	wxButton* m_startRecording;
-	wxButton* m_cancelRecording;
 };
 #endif

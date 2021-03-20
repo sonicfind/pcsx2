@@ -177,7 +177,7 @@ void InputRecordingControls::Lock(u32 frame)
 	frameLockTracker = frame;
 	frameAdvancing = false;
 	//Ensures that g_frameCount can be used to resume emulation after a fast/full boot
-	if (!g_InputRecording.GetInputRecordingData().FromSaveState())
+	if (!g_InputRecording.GetInputRecordingData().FromSavestate())
 		g_FrameCount = frame + 1;
 	else
 		sMainFrame.StartInputRecording();

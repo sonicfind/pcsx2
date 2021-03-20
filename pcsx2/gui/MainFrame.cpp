@@ -71,7 +71,7 @@ void MainEmuFrame::UpdateStatusBar()
 	wxString temp(wxEmptyString);
 
 #ifndef DISABLE_RECORDING
-	if (g_InputRecording.IsActive() && g_InputRecording.GetInputRecordingData().FromSaveState())
+	if (g_InputRecording.IsActive() && g_InputRecording.GetInputRecordingData().FromSavestate())
 		temp += "Base Savestate - " + g_InputRecording.GetInputRecordingData().GetFilename() + "_SaveState.p2s";
 	else
 #endif

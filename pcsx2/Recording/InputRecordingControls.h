@@ -19,6 +19,22 @@
 
 class InputRecordingControls
 {
+	// Indicates if the input recording controls have explicitly paused emulation or not
+	bool emulationCurrentlyPaused = false;
+	// Indicates on the next VSync if we are frame advancing, this value
+	// and should be cleared once a single frame has passed
+	bool frameAdvancing = false;
+	// Indicates if we intend to call CoreThread.PauseSelf() on the current or next available vsync
+	bool pauseEmulation = false;
+	// Indicates if we intend to call CoreThread.Resume() when the next pcsx2 App event is handled
+	bool resumeEmulation = false;
+	// Indicates to switch to replay mode after the next vsync
+	bool switchToReplay = false;
+	// Used to stop recording frames from incrementing during a reset
+	bool frameLock = false;
+	// The frame value to use as the frame lock reset point
+	u32 frameLockTracker = 0;
+
 public:
 	// Intended to be called at the end of each frame, but will no-op if frame lock is active
 	//
@@ -66,23 +82,6 @@ public:
 	// or when processing a reboot with a recording active that no frames are
 	// lost in prior emulation
 	void Lock(u32 frame);
-
-private:
-	// Indicates if the input recording controls have explicitly paused emulation or not
-	bool emulationCurrentlyPaused = false;
-	// Indicates on the next VSync if we are frame advancing, this value
-	// and should be cleared once a single frame has passed
-	bool frameAdvancing = false;
-	// Indicates if we intend to call CoreThread.PauseSelf() on the current or next available vsync
-	bool pauseEmulation = false;
-	// Indicates if we intend to call CoreThread.Resume() when the next pcsx2 App event is handled
-	bool resumeEmulation = false;
-	// Indicates to switch to replay mode after the next vsync
-	bool switchToReplay = false;
-	// Used to stop recording frames from incrementing during a reset
-	bool frameLock = false;
-	// The frame value to use as the frame lock reset point
-	u32 frameLockTracker = 0;
 };
 
 extern InputRecordingControls g_InputRecordingControls;

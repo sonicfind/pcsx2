@@ -218,13 +218,9 @@ SIO_WRITE sioWriteController(u8 data)
 		sio.buf[sio.bufCount] = PADpoll(data);
 #ifndef DISABLE_RECORDING
 		if (g_Conf->EmuOptions.EnableRecordingTools)
-		{
 			// Only examine controllers 1 / 2
 			if (sio.slot[sio.port] == 0)
-			{
-				g_InputRecording.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
-			}
-		}
+				g_InputRecording.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf[sio.bufCount]);
 #endif
 		break;
 	}
